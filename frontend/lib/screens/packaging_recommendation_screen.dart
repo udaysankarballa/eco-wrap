@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../models/commodity_model.dart';
+import '../models/recommendation_model.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 
 class PackagingRecommendationScreen extends StatelessWidget {
   final CommodityModel commodity;
+  final PackagingRecommendation recommendation;
 
   final bool useLabValues;
   final double moisture;
@@ -22,6 +24,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
   const PackagingRecommendationScreen({
     super.key,
     required this.commodity,
+    required this.recommendation,
     required this.useLabValues,
     required this.moisture,
     required this.ph,
@@ -36,7 +39,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final candidates = commodity.packagingCandidates;
+    final alternatives = recommendation.alternatives;
 
     return Scaffold(
       backgroundColor: const Color(0xFFEFF4F1),
@@ -80,30 +83,16 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
                           const SizedBox(height: 14),
 
-                          if (candidates.isEmpty)
+                          if (recommendation.recommendedMaterial.isEmpty)
                             _buildNoRecommendation()
                           else ...[
-                            _buildTopRecommendation(candidates.first),
-
-                            const SizedBox(height: 20),
-
-                            if (candidates.length > 1) ...[
-                              Text(
-                                'Alternative Options',
-                                style: AppTextStyles.sectionTitle.copyWith(
-                                  fontSize: 21,
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              for (int i = 1; i < candidates.length; i++) ...[
-                                _buildAlternativeCard(candidates[i], i + 1),
-                                const SizedBox(height: 12),
-                              ],
+                            _buildTopRecommendation(recommendation),
+                            if (alternatives.isNotEmpty) ...[
+                              const SizedBox(height: 16),
+                              for (int i = 0; i < alternatives.length; i++)
+                                _buildAlternativeCard(alternatives[i], i + 2),
                             ],
                           ],
-
                           const SizedBox(height: 18),
 
                           _buildConditionsConsidered(),
@@ -333,7 +322,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildTopRecommendation(PackagingCandidate candidate) {
+  Widget _buildTopRecommendation(PackagingRecommendation recommendation) {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -402,7 +391,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  candidate.material,
+                  recommendation.recommendedMaterial,
                   style: AppTextStyles.heroTitle.copyWith(
                     color: AppColors.textPrimary,
                     fontSize: 23,
@@ -412,7 +401,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  candidate.structure,
+                  recommendation.structure,
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.primaryGreen,
                     fontWeight: FontWeight.w700,
@@ -421,19 +410,19 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
                 const SizedBox(height: 15),
 
-                _buildPackagingType(candidate),
+                _buildPackagingType(recommendation),
 
                 const SizedBox(height: 16),
 
-                _buildSpecificationGrid(candidate),
+                _buildSpecificationGrid(recommendation),
 
                 const SizedBox(height: 16),
 
-                _buildWhyRecommended(candidate),
+                _buildWhyRecommended(recommendation),
 
                 const SizedBox(height: 16),
 
-                _buildScores(candidate),
+                _buildScores(recommendation),
               ],
             ),
           ),
@@ -442,7 +431,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildPackagingType(PackagingCandidate candidate) {
+  Widget _buildPackagingType(PackagingRecommendation recommendation) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -462,7 +451,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
           Expanded(
             child: Text(
-              candidate.packagingType,
+              recommendation.packagingType,
               style: AppTextStyles.bodyMedium.copyWith(fontSize: 13),
             ),
           ),
@@ -471,7 +460,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSpecificationGrid(PackagingCandidate candidate) {
+  Widget _buildSpecificationGrid(PackagingRecommendation recommendation) {
     return Column(
       children: [
         Row(
@@ -480,17 +469,16 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.straighten_rounded,
                 'Thickness',
-                '${candidate.thicknessMin.toStringAsFixed(0)}–${candidate.thicknessMax.toStringAsFixed(0)} µm',
+                recommendation.thickness,
               ),
             ),
-
             const SizedBox(width: 9),
 
             Expanded(
               child: _buildSpecification(
                 Icons.shield_outlined,
                 'Barrier',
-                candidate.barrierLevel,
+                recommendation.barrierLevel,
               ),
             ),
           ],
@@ -504,7 +492,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.water_drop_outlined,
                 'WVTR',
-                _wvtrLevel(candidate),
+                recommendation.wvtr,
               ),
             ),
 
@@ -514,7 +502,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.air_rounded,
                 'OTR',
-                _otrLevel(candidate),
+                recommendation.otr,
               ),
             ),
           ],
@@ -528,7 +516,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.lock_outline_rounded,
                 'Sealability',
-                candidate.sealability,
+                recommendation.sealability,
               ),
             ),
 
@@ -538,7 +526,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.fitness_center_rounded,
                 'Strength',
-                candidate.mechanicalStrength,
+                recommendation.mechanicalStrength,
               ),
             ),
           ],
@@ -552,7 +540,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.swap_horiz_rounded,
                 'Gas',
-                candidate.gasPermeability,
+                recommendation.gasPermeability,
               ),
             ),
 
@@ -562,7 +550,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
               child: _buildSpecification(
                 Icons.airplay_rounded,
                 'MAP',
-                _mapSuitability(candidate),
+                recommendation.mapSuitability,
               ),
             ),
           ],
@@ -610,7 +598,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildWhyRecommended(PackagingCandidate candidate) {
+  Widget _buildWhyRecommended(PackagingRecommendation recommendation) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(13),
@@ -641,7 +629,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
                 const SizedBox(height: 5),
 
-                Text(candidate.reason, style: AppTextStyles.caption),
+                Text(recommendation.reasoning.join(' '), style: AppTextStyles.caption),
               ],
             ),
           ),
@@ -650,14 +638,14 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildScores(PackagingCandidate candidate) {
+  Widget _buildScores(PackagingRecommendation recommendation) {
     return Row(
       children: [
         Expanded(
           child: _buildScore(
             Icons.eco_rounded,
             'Sustainability',
-            candidate.sustainabilityScore,
+            recommendation.sustainabilityScore.round(),
           ),
         ),
 
@@ -667,7 +655,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
           child: _buildScore(
             Icons.payments_outlined,
             'Cost',
-            candidate.costScore,
+            recommendation.costScore.round(),
           ),
         ),
       ],
@@ -713,7 +701,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAlternativeCard(PackagingCandidate candidate, int rank) {
+  Widget _buildAlternativeCard(PackagingAlternative candidate, int rank) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(15),
@@ -768,17 +756,14 @@ class PackagingRecommendationScreen extends StatelessWidget {
             spacing: 7,
             runSpacing: 7,
             children: [
-              _buildMiniChip('Barrier: ${candidate.barrierLevel}'),
-              _buildMiniChip(
-                'Thickness: ${candidate.thicknessMin.toStringAsFixed(0)}–${candidate.thicknessMax.toStringAsFixed(0)} µm',
-              ),
-              _buildMiniChip('Eco: ${candidate.sustainabilityScore}/100'),
+              _buildMiniChip('Score: /100'),
+              _buildMiniChip('Eco: ${recommendation.sustainabilityScore.round()}/100'),
             ],
           ),
 
           const SizedBox(height: 11),
 
-          Text(candidate.reason, style: AppTextStyles.caption),
+          Text(recommendation.reasoning.join(' '), style: AppTextStyles.caption),
         ],
       ),
     );
@@ -1031,7 +1016,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
 
   String _mapSuitability(PackagingCandidate candidate) {
     final gas = candidate.gasPermeability.toLowerCase();
-    final type = candidate.packagingType.toLowerCase();
+    final type = recommendation.packagingType.toLowerCase();
 
     if (gas.contains('controlled') ||
         gas.contains('permeable') ||
@@ -1042,3 +1027,7 @@ class PackagingRecommendationScreen extends StatelessWidget {
     return 'Review';
   }
 }
+
+
+
+

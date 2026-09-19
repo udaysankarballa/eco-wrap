@@ -28,7 +28,6 @@ class ApiService {
       'moisture': moisture,
       'ph': ph,
       'fat': fat,
-      'respiration_rate': respirationRate,
       'shelf_life': shelfLife,
       'storage_type': storageType,
       'temperature': temperature,

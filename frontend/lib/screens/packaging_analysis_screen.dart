@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../models/commodity_model.dart';
+import '../services/api_service.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
 import '../widgets/eco_button.dart';
@@ -121,29 +122,56 @@ class _PackagingAnalysisScreenState extends State<PackagingAnalysisScreen> {
     return double.tryParse(cleaned) ?? 0.0;
   }
 
-  void _openRecommendations() {
+  Future<void> _openRecommendations() async {
     final temperature = _parseValue(widget.temperature);
-
     final humidity = _parseValue(widget.humidity);
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => PackagingRecommendationScreen(
-          commodity: widget.commodity,
-          useLabValues: widget.useLabValues,
-          moisture: widget.moisture,
-          ph: widget.ph,
-          fat: widget.fat,
-          shelfLife: widget.shelfLife,
-          storageType: widget.storageType,
-          temperature: temperature,
-          humidity: humidity,
-          transportMode: widget.transportMode,
-          transportDuration: widget.transportDuration,
+    try {
+      final recommendation = await ApiService().getRecommendation(
+        commodity: widget.commodity.name,
+        moisture: widget.moisture,
+        ph: widget.ph,
+        fat: widget.fat,
+        respirationRate: widget.respirationRate,
+        shelfLife: int.tryParse(widget.shelfLife) ?? 1,
+        storageType: widget.storageType,
+        temperature: temperature,
+        humidity: humidity,
+        transportMode: widget.transportMode,
+        transportDuration: int.tryParse(widget.transportDuration) ?? 0,
+        useLabValues: widget.useLabValues,
+      );
+
+      if (!mounted) return;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => PackagingRecommendationScreen(
+            commodity: widget.commodity,
+            recommendation: recommendation,
+            useLabValues: widget.useLabValues,
+            moisture: widget.moisture,
+            ph: widget.ph,
+            fat: widget.fat,
+            shelfLife: widget.shelfLife,
+            storageType: widget.storageType,
+            temperature: temperature,
+            humidity: humidity,
+            transportMode: widget.transportMode,
+            transportDuration: widget.transportDuration,
+          ),
         ),
-      ),
-    );
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Unable to get recommendation: '),
+        ),
+      );
+    }
   }
 
   @override

@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException
+﻿from fastapi import APIRouter, HTTPException
 
 from app.models.schemas import PackagingRequest
 from app.services.recommendation_engine import recommend_packaging
-from app.services.team_dataset_service import get_team_commodity_data
+from app.services.respiration_service import estimate_respiration_rate
 
 
 router = APIRouter(
@@ -453,18 +453,13 @@ for commodity in [
 # ---------------------------------------------------------------------------
 # API ENDPOINT
 # ---------------------------------------------------------------------------
+# ---------------------------------------------------------------------------
+# API ENDPOINT
+# ---------------------------------------------------------------------------
 
 @router.post("/recommend", response_model=object)
 def get_packaging_recommendation(request: PackagingRequest):
     commodity_key = request.commodity.strip().lower()
-    team_data = get_team_commodity_data(request.commodity)
-
-    if team_data:
-        print(
-            f"ECO WRAP: Using team dataset for "
-            f"{team_data['commodity']} | "
-            f"Respiration: {team_data['respiration_rate']}"
-        )
 
     if commodity_key not in FOOD_PROFILES:
         raise HTTPException(
@@ -486,15 +481,25 @@ def get_packaging_recommendation(request: PackagingRequest):
         )
 
     try:
-        return recommend_packaging(
+        recommendation = recommend_packaging(
             request=request,
             food_profile=food_profile,
             candidates=candidates,
-            team_data=team_data,
         )
+
+        respiration = estimate_respiration_rate(
+            commodity=commodity_key,
+            temperature_c=request.temperature,
+        )
+
+        recommendation["respiration"] = respiration
+
+        return recommendation
+
     except ValueError as exc:
         raise HTTPException(
             status_code=400,
             detail=str(exc),
         ) from exc
 
+      

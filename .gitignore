@@ -31,3 +31,9 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# Internal backup files
+backend/app/models/schemas_BASELINE.py
+backend/app/routes/recommendation_routes_BASELINE.py
+backend/app/routes/recommendation_routes_BEFORE_RESPIRATION.py
+backend/app/services/recommendation_engine_BASELINE.py

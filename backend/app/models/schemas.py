@@ -8,10 +8,6 @@ class PackagingRequest(BaseModel):
     ph: float = Field(..., ge=0, le=14)
     fat: float = Field(..., ge=0, le=100)
 
-    # Respiration rate of the commodity.
-    # Expected values: Low, Medium, High, Very High.
-    respiration_rate: str = Field(..., min_length=1)
-
     shelf_life: int = Field(..., ge=1)
 
     storage_type: str = Field(..., min_length=1)
